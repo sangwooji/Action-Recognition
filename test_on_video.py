@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_shape = (opt.channels, opt.image_dim, opt.image_dim)
+    print ('input_shape', input_shape)
 
     transform = transforms.Compose(
         [
@@ -38,20 +39,22 @@ if __name__ == "__main__":
     labels = sorted(list(set(os.listdir(opt.dataset_path))))
 
     # Define model and load model checkpoint
-    model = ConvLSTM(input_shape=input_shape, num_classes=len(labels), latent_dim=opt.latent_dim)
+    # model = ConvLSTM(input_shape=input_shape, num_classes=len(labels), latent_dim=opt.latent_dim)
+    model = ConvLSTM(num_classes=len(labels), latent_dim=opt.latent_dim)
     model.to(device)
     model.load_state_dict(torch.load(opt.checkpoint_model))
     model.eval()
 
     # Extract predictions
     output_frames = []
-    for frame in tqdm.tqdm(extract_frames(opt.video_path), desc="Processing frames"):
+    for frame in tqdm.tqdm(extract_frames(opt.video_path, 0), desc="Processing frames"):
         image_tensor = Variable(transform(frame)).to(device)
         image_tensor = image_tensor.view(1, 1, *image_tensor.shape)
 
         # Get label prediction for frame
         with torch.no_grad():
             prediction = model(image_tensor)
+            print (image_tensor.shape)
             predicted_label = labels[prediction.argmax(1).item()]
 
         # Draw label on frame

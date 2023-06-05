@@ -9,6 +9,9 @@ from torch.autograd import Variable
 import argparse
 import time
 import datetime
+import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -24,7 +27,7 @@ if __name__ == "__main__":
 
     assert opt.checkpoint_model, "Specify path to checkpoint model using arg. '--checkpoint_model'"
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda")
 
     image_shape = (opt.channels, opt.img_dim, opt.img_dim)
 
@@ -46,6 +49,7 @@ if __name__ == "__main__":
         lstm_layers=1,
         hidden_dim=1024,
         bidirectional=True,
+        #attention=True,
     )
     model = model.to(device)
     model.load_state_dict(torch.load(opt.checkpoint_model))

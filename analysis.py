@@ -11,9 +11,9 @@ import time
 import datetime
 import os
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="data/UCF-101-frames", help="Path to UCF-101 dataset")
     parser.add_argument("--split_path", type=str, default="data/ucfTrainTestlist", help="Path to train/test split")
@@ -25,17 +25,22 @@ if __name__ == "__main__":
     parser.add_argument("--channels", type=int, default=3, help="Number of image channels")
     parser.add_argument("--latent_dim", type=int, default=512, help="Dimensionality of the latent representation")
     parser.add_argument("--checkpoint_model", type=str, default="", help="Optional path to checkpoint model")
-    parser.add_argument("--save_name", stype=str, default="ConvLSTM", help="Name of savefile")
+    parser.add_argument("--save_name", type=str, default="ConvLSTM", help="Name of savefile")
+    parser.add_argument("--lr", type=float, default=1e-5, help="learning rate")
+    parser.add_argument("--weight_decay", type=float, default=0, help="Weight decay")
+    parser.add_argument("--gpu", type=str, default='0', help="CUDA GPU number")
     parser.add_argument(
         "--checkpoint_interval", type=int, default=5, help="Interval between saving model checkpoints"
     )
     opt = parser.parse_args()
     print(opt)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = 'cpu'
 
     image_shape = (opt.channels, opt.img_dim, opt.img_dim)
 
+    """
     # Define training set
     train_dataset = Dataset(
         dataset_path=opt.dataset_path,
@@ -46,6 +51,7 @@ if __name__ == "__main__":
         training=True,
     )
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=4)
+    """
 
     # Define test set
     test_dataset = Dataset(
@@ -56,7 +62,13 @@ if __name__ == "__main__":
         sequence_length=opt.sequence_length,
         training=False,
     )
-    test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False, num_workers=4)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=1)
+
+    for image, label in test_dataloader:
+        break
+    
+    print (image.shape)
+    exit()
 
     # Classification criterion
     cls_criterion = nn.CrossEntropyLoss().to(device)
@@ -76,7 +88,9 @@ if __name__ == "__main__":
     if opt.checkpoint_model:
         model.load_state_dict(torch.load(opt.checkpoint_model))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr,
+            weight_decay=opt.weight_decay)
+    print (optimizer)
 
     def test_model(epoch):
         """ Evaluate the model on the test set """
@@ -173,11 +187,11 @@ if __name__ == "__main__":
         test_model(epoch)
 
         # Save model checkpoint
-        if epoch % opt.checkpoint_interval == 0:
+        if (epoch+1) % opt.checkpoint_interval == 0:
             os.makedirs("model_checkpoints", exist_ok=True)
             if opt.save_name is not "":
                 torch.save(model.state_dict(), f"model_checkpoints/{opt.save_name}_{epoch}.pth")
-            else
+            else:
                 torch.save(model.state_dict(), f"model_checkpoints/{model.__class__.__name__}_{epoch}.pth")
 
 

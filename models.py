@@ -20,8 +20,8 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x):
-        with torch.no_grad():
-            x = self.feature_extractor(x)
+        # with torch.no_grad():
+        x = self.feature_extractor(x)
         x = x.view(x.size(0), -1)
         return self.final(x)
 

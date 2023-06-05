@@ -14,20 +14,24 @@ std = np.array([0.229, 0.224, 0.225])
 
 
 class Dataset(Dataset):
-    def __init__(self, dataset_path, split_path, split_number, input_shape, sequence_length, training):
+    def __init__(self, dataset_path, split_path, split_number, input_shape, sequence_length, training, transform=None):
         self.training = training
         self.label_index = self._extract_label_mapping(split_path)
         self.sequences = self._extract_sequence_paths(dataset_path, split_path, split_number, training)
         self.sequence_length = sequence_length
         self.label_names = sorted(list(set([self._activity_from_path(seq_path) for seq_path in self.sequences])))
         self.num_classes = len(self.label_names)
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize(input_shape[-2:], Image.BICUBIC),
-                transforms.ToTensor(),
-                transforms.Normalize(mean, std),
-            ]
-        )
+        
+        if transform is None:
+            self.transform = transforms.Compose(
+                [
+                    transforms.Resize(input_shape[-2:], Image.BICUBIC),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean, std),
+                ]
+            )
+        else:
+            self.transform = transform
 
     def _extract_label_mapping(self, split_path="data/ucfTrainTestlist"):
         """ Extracts a mapping between activity name and softmax index """
